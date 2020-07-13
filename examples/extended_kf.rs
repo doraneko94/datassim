@@ -4,6 +4,7 @@ use ndarray::*;
 use ndarray_linalg::*;
 use rand::prelude::*;
 use rand_distr::StandardNormal;
+use std::env;
 use std::fs::File;
 use std::io::{BufRead, Write, BufReader, BufWriter};
 
@@ -15,6 +16,12 @@ const DELTA: f64 = 1e-5;
 
 #[allow(bare_trait_objects)]
 fn main() -> Result<(), Box<std::error::Error>> {
+    let args: Vec<String> = env::args().collect();
+    let rate: f64 = if args.len() == 2 {
+        args[1].parse().ok().unwrap()
+    } else {
+        1.0
+    };
     let mut h: Array2<f64> = Array2::zeros((M, N));
     for i in 0..M { h[[i, i]] = 1.0 }
     let r: Array2<f64> = Array2::eye(N);
@@ -69,7 +76,7 @@ fn main() -> Result<(), Box<std::error::Error>> {
             }
         }
         let mut pf: Array2<f64> = jm.dot(&pa);
-        pf = pf.dot(&jm.t()) * 1.1;
+        pf = pf.dot(&jm.t()) * rate;
         let pf_ht = pf.dot(&h.t());
         let k = pf_ht.dot(&(h.dot(&pf_ht) + &r).inv()?);
         ua = uf.to_owned() + k.dot(&(u_obs.to_owned() - h.dot(&uf)));
